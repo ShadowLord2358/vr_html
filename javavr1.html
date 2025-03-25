@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Interactive VR Scene</title>
+    <title>Basic VR Scene</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/webxr/VRButton.js"></script>
   </head>
   <body>
     <script>
-      // Scene setup
+      // Set up scene, camera, and renderer
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer();
@@ -16,59 +16,19 @@
       document.body.appendChild(renderer.domElement);
       document.body.appendChild(VRButton.createButton(renderer));
 
-      // Light setup
-      const light = new THREE.PointLight(0xffffff, 1, 100);
-      light.position.set(10, 10, 10);
-      scene.add(light);
+      // Add a simple cube
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
 
-      // Create a grid of geometries
-      const geometries = [];
-      const gridSize = 5; // 5x5 grid
-      for (let x = -gridSize; x <= gridSize; x++) {
-        for (let z = -gridSize; z <= gridSize; z++) {
-          const geometry = new THREE.SphereGeometry(0.3, 32, 32);
-          const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
-          const sphere = new THREE.Mesh(geometry, material);
-          sphere.position.set(x * 1.5, 0, z * 1.5);
-          scene.add(sphere);
-          geometries.push(sphere);
-        }
-      }
-
-      // Raycaster for gaze detection
-      const raycaster = new THREE.Raycaster();
-      const pointer = new THREE.Vector2();
-
-      function detectGaze() {
-        raycaster.setFromCamera(pointer, camera);
-        const intersects = raycaster.intersectObjects(geometries);
-        intersects.forEach((intersect) => {
-          intersect.object.material.color.set(Math.random() * 0xffffff); // Change color
-        });
-      }
-
-      // Animate the geometries
-      function animateGeometries() {
-        geometries.forEach((geo, index) => {
-          geo.position.y = Math.sin(Date.now() * 0.001 + index) * 0.5; // Wave effect
-        });
-      }
-
-      // Add VR controller support
-      const controller = renderer.xr.getController(0);
-      scene.add(controller);
-
-      controller.addEventListener('selectstart', () => {
-        camera.position.z -= 0.5; // Move forward
-      });
-      controller.addEventListener('selectend', () => {
-        camera.position.z += 0.5; // Move backward
-      });
+      // Position the camera
+      camera.position.z = 5;
 
       // Animation loop
       function animate() {
-        detectGaze();
-        animateGeometries();
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
         renderer.setAnimationLoop(() => {
           renderer.render(scene, camera);
         });
