@@ -14,10 +14,10 @@
 </head>
 <body>
     <script>
-        // Debugging: Browser WebXR check
+        // Debugging: Check for WebXR support
         if (!navigator.xr) {
-            console.error("WebXR not supported in this browser.");
-            document.body.innerHTML = "<h1 style='color: red;'>WebXR is not supported in this browser. Please check your device settings or try a different browser.</h1>";
+            console.error("WebXR is not supported in this browser.");
+            document.body.innerHTML = "<h1 style='color: red;'>WebXR is not supported in this browser. Please check your browser settings or try a different browser.</h1>";
         } else {
             console.log("WebXR is supported in this browser.");
         }
@@ -30,55 +30,30 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.xr.enabled = true;
             document.body.appendChild(renderer.domElement);
-            document.body.appendChild(VRButton.createButton(renderer));
-            console.log("Renderer and VRButton successfully initialized.");
+
+            // Add the VR Button
+            const vrButton = VRButton.createButton(renderer);
+            document.body.appendChild(vrButton);
+            console.log("VR Button added to the page.");
 
             // Add lighting
             const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(1, 1, 1).normalize();
             scene.add(light);
 
-            // Add interactive cubes
-            const objects = [];
-            for (let i = 0; i < 10; i++) {
-                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-                const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
-                const cube = new THREE.Mesh(geometry, material);
-                cube.position.set(
-                    Math.random() * 4 - 2,
-                    Math.random() * 4 - 2,
-                    Math.random() * -3 - 1
-                );
-                scene.add(cube);
-                objects.push(cube);
-            }
-            console.log("Objects successfully added to the scene.");
-
-            // VR controller input
-            const controller = renderer.xr.getController(0);
-            scene.add(controller);
-
-            controller.addEventListener('selectstart', () => {
-                const raycaster = new THREE.Raycaster();
-                raycaster.ray.origin.copy(controller.position);
-                raycaster.ray.direction.set(0, 0, -1).applyQuaternion(controller.quaternion);
-
-                const intersects = raycaster.intersectObjects(objects);
-                if (intersects.length > 0) {
-                    intersects[0].object.material.color.set(Math.random() * 0xffffff);
-                    console.log("Object selected and color changed.");
-                } else {
-                    console.log("No object intersected.");
-                }
-            });
+            // Add a rotating cube
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(0, 1.5, -3);
+            scene.add(cube);
+            console.log("Rotating cube added to the scene.");
 
             // Animation loop
             function animate() {
                 renderer.setAnimationLoop(() => {
-                    objects.forEach((object) => {
-                        object.rotation.x += 0.01;
-                        object.rotation.y += 0.01;
-                    });
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
                     renderer.render(scene, camera);
                 });
             }
