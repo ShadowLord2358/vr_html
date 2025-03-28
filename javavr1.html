@@ -1,64 +1,74 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <title>Interactive VR Scene</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/webxr/VRButton.js"></script>
-  </head>
-  <body>
+</head>
+<body>
     <script>
-      // Set up the scene, camera, and renderer
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
-      document.body.appendChild(VRButton.createButton(renderer));
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(VRButton.createButton(renderer));
 
-      // Add lighting
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(1, 1, 1).normalize();
-      scene.add(light);
+        // Add lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1, 1, 1).normalize();
+        scene.add(light);
 
-      // Add interactive objects (e.g., cubes)
-      const objects = [];
-      for (let i = 0; i < 10; i++) {
-        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
-        const cube = new THREE.Mesh(geometry, material);
-        cube.position.set(Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * -3 - 1);
-        scene.add(cube);
-        objects.push(cube);
-      }
-
-      // Add a raycaster for interaction
-      const raycaster = new THREE.Raycaster();
-      const tempMatrix = new THREE.Matrix4();
-
-      // Handle VR controller input
-      const controller = renderer.xr.getController(0);
-      scene.add(controller);
-
-      controller.addEventListener('selectstart', () => {
-        raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-        const intersects = raycaster.intersectObjects(objects);
-        if (intersects.length > 0) {
-          intersects[0].object.material.color.set(Math.random() * 0xffffff);
+        // Add interactive cubes
+        const objects = [];
+        for (let i = 0; i < 10; i++) {
+            const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(
+                Math.random() * 4 - 2, 
+                Math.random() * 4 - 2, 
+                Math.random() * -3 - 1
+            );
+            scene.add(cube);
+            objects.push(cube);
         }
-      });
 
-      // Animate the scene
-      function animate() {
-        renderer.setAnimationLoop(() => {
-          objects.forEach((object) => {
-            object.rotation.x += 0.01;
-            object.rotation.y += 0.01;
-          });
-          renderer.render(scene, camera);
+        // VR controller input
+        const controller = renderer.xr.getController(0);
+        scene.add(controller);
+
+        controller.addEventListener('selectstart', () => {
+            const raycaster = new THREE.Raycaster();
+            raycaster.ray.origin.copy(controller.position);
+            raycaster.ray.direction.set(0, 0, -1).applyQuaternion(controller.quaternion);
+
+            const intersects = raycaster.intersectObjects(objects);
+            if (intersects.length > 0) {
+                intersects[0].object.material.color.set(Math.random() * 0xffffff);
+            }
         });
-      }
-      animate();
+
+        // Animation loop
+        function animate() {
+            renderer.setAnimationLoop(() => {
+                objects.forEach((object) => {
+                    object.rotation.x += 0.01;
+                    object.rotation.y += 0.01;
+                });
+                renderer.render(scene, camera);
+            });
+        }
+        animate();
     </script>
-  </body>
+</body>
 </html>
