@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Rotating Cube in VR</title>
-    <meta charset="UTF-8">
+    <title>Rotating Cube in Space</title>
+    <meta charset="utf-8">
     <style>
         body {
             margin: 0;
@@ -15,80 +15,82 @@
 </head>
 <body>
     <script>
-        // Debugging WebXR support
-        if (!navigator.xr) {
-            console.error("WebXR not supported in this browser.");
-            document.body.innerHTML = "<h1 style='color: red;'>WebXR is not supported in this browser. Please check your settings or use another browser.</h1>";
-            return;
+        let scene, camera, renderer;
+        let cube, controller, controllerGrip;
+        const clock = new THREE.Clock();
+
+        function init() {
+            // Create the scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000); // Black space
+
+            // Create the camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 3); // Starting position
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true; // Enable WebXR
+            document.body.appendChild(renderer.domElement);
+
+            // Add VR Button
+            document.body.appendChild(XRButton.createButton(renderer));
+
+            // Lighting
+            const light = new THREE.PointLight(0xffffff, 1, 100);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+
+            // Grid helper (space effect)
+            const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444);
+            gridHelper.position.y = -2;
+            scene.add(gridHelper);
+
+            // Rotating cube
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Green color
+            cube = new THREE.Mesh(geometry, material);
+            cube.position.set(0, 0, 0);
+            scene.add(cube);
+
+            // VR Controller
+            controller = renderer.xr.getController(0);
+            controller.addEventListener('selectstart', () => {
+                console.log("Controller interaction detected!");
+            });
+            scene.add(controller);
+
+            const controllerModelFactory = new XRControllerModelFactory();
+            controllerGrip = renderer.xr.getControllerGrip(0);
+            controllerGrip.add(controllerModelFactory.createControllerModel(controllerGrip));
+            scene.add(controllerGrip);
+
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
         }
 
-        // Setting up the scene
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000); // Black background
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
 
-        // Camera and renderer
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
+        function animate() {
+            const delta = clock.getDelta();
 
-        // Add VR button
-        document.body.appendChild(XRButton.createButton(renderer));
-
-        // Lighting
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(10, 10, 10);
-        scene.add(light);
-
-        // Create the grid (space effect)
-        const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x444444); // Smaller divisions, darker color
-        gridHelper.position.y = -2; // Position below the cube
-        scene.add(gridHelper);
-
-        // Create the rotating green cube
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // Green color
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-
-        // Enable movement with controllers
-        const controller = renderer.xr.getController(0);
-        const controllerModelFactory = new XRControllerModelFactory();
-
-        // Attach model for visualization
-        const controllerGrip = renderer.xr.getControllerGrip(0);
-        controllerGrip.add(controllerModelFactory.createControllerModel(controllerGrip));
-        scene.add(controllerGrip);
-
-        controller.addEventListener('selectstart', () => {
-            console.log("Controller button pressed!");
-        });
-
-        scene.add(controller);
-
-        // Position camera and cube
-        camera.position.z = 5; // Start camera a bit back
-        cube.position.set(0, 0, 0); // Center the cube
-
-        // Animate the scene
-        const animate = () => {
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
+            // Rotate cube
+            cube.rotation.x += 0.01 * delta * 60;
+            cube.rotation.y += 0.01 * delta * 60;
 
             renderer.setAnimationLoop(() => {
                 renderer.render(scene, camera);
             });
-        };
+        }
 
+        // Initialize and animate
+        init();
         animate();
-
-        // Adjust viewport on resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
