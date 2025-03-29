@@ -15,7 +15,9 @@
 		<script type="importmap">
 			{
 				"imports": {
-					"three": "../build/three.module.js",
+					"three": "../build/three.webgpu.js",
+					"three/webgpu": "../build/three.webgpu.js",
+					"three/tsl": "../build/three.tsl.js",
 					"three/addons/": "./jsm/"
 				}
 			}
@@ -94,7 +96,7 @@
 
 				raycaster = new THREE.Raycaster();
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGPURenderer( { antialias: true, forceWebGL: true, colorBufferType: THREE.UnsignedByteType } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setAnimationLoop( animate );
@@ -120,7 +122,13 @@
 				controller.addEventListener( 'selectend', onSelectEnd );
 				controller.addEventListener( 'connected', function ( event ) {
 
-					this.add( buildController( event.data ) );
+					const targetRayMode = event.data.targetRayMode;
+
+					if ( targetRayMode === 'tracked-pointer' || targetRayMode === 'gaze' ) {
+
+						this.add( buildController( event.data ) );
+
+					}
 
 				} );
 				controller.addEventListener( 'disconnected', function () {
@@ -140,10 +148,7 @@
 
 				//
 
-				document.body.appendChild( XRButton.createButton( renderer, {
-					'optionalFeatures': [ 'depth-sensing' ],
-					'depthSensing': { 'usagePreference': [ 'gpu-optimized' ], 'dataFormatPreference': [] }
-				} ) );
+				document.body.appendChild( XRButton.createButton( renderer ) );
 
 			}
 
